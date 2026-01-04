@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>HHH</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  .inline-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100px;
+    padding: 5px;
+    font-size: 1em;
+  }
+  button {
+    padding: 6px 12px;
+    font-size: 1em;
+  }
+  #overlay {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background: black;
+    color:white;
+    font-size: 5em;
+    text-align:center;
+    line-height:100vh;
+    z-index: 9999;
+    cursor: pointer;
+  }
+  .notes {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+  }
+  textarea {
+    width: 45%;
+    height: 200px;
+    padding: 10px;
+    font-size: 1em;
+    resize: vertical;
+  }
+</style>
+</head>
+<body>
+
+<div class="inline-controls">
+  <input type="text" id="startTime" placeholder="開播時間">
+  <input type="number" id="minutes" placeholder="間隔">
+  <button onclick="startTimer()">開始</button>
+</div>
+
+<p id="result"></p>
+
+<div id="overlay">該填人數了</div>
+
+<div class="notes">
+  <textarea id="note1" placeholder="記事本1"></textarea>
+  <textarea id="note2" placeholder="記事本2"></textarea>
+</div>
+
+<script>
+let originalTitle = document.title;
+let intervalMinutes = 0;
+let checkTimer = null;
+let flashInterval = null;
+let isFlashing = false;
+const overlay = document.getElementById("overlay");
+
+// ---------- 時間提醒功能 ----------
+function startTimer() {
+    clearAll();
+
+    // 在使用者互動時請求通知權限
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+            if (permission !== "granted") {
+                alert("請允許通知，才能收到時間到提醒");
+            }
+        });
+    }
+
+    const timeStr = document.getElementById("startTime").value;
+    intervalMinutes = parseInt(document.getElementById("minutes").value, 10);
+
+    if (!/^\d{4}$/.test(timeStr) || isNaN(intervalMinutes)) {
+        alert("請輸入正確格式，例如 0840 和 25");
+        return;
+    }
+
+    let hour = parseInt(timeStr.substring(0,2),10);
+    let min = parseInt(timeStr.substring(2,4),10);
+
+    // PM
+    hour = (hour + 12) % 24;
+
+    scheduleNextFromNow(hour, min);
+}
+
+function scheduleNextFromNow(hour, min) {
+    const now = new Date();
+    let target = new Date(now);
+    target.setHours(hour, min, 0, 0);
+    target.setMinutes(target.getMinutes() + intervalMinutes);
+
+    if(target <= now){
+        target = new Date(now.getTime() + intervalMinutes*60000);
+    }
+
+    scheduleNext(target);
+}
+
+function scheduleNext(target){
+    document.getElementById("result").innerText =
+        "下一次提醒：" + target.toLocaleString();
+
+    checkTimer = setInterval(()=>{
+        const now = new Date();
+        if(now >= target){
+            clearInterval(checkTimer);
+            onTimeUp();
+        }
+    },1000);
+}
+
+function onTimeUp(){
+    // 顯示滿版 overlay 或標題閃爍
+    if(document.visibilityState === "visible"){
+        overlay.style.display = "flex";
+    }else{
+        startTitleFlash();
+    }
+
+    // 顯示靜音系統通知（只在已授權時）
+    showSilentNotification("⏰ 時間到了！", "請填人數或完成你的任務。");
+}
+
+function startTitleFlash(){
+    if(isFlashing) return;
+    isFlashing = true;
+    let toggle = false;
+    flashInterval = setInterval(()=>{
+        document.title = toggle ? "⏰ 時間到了！" : originalTitle;
+        toggle = !toggle;
+    },500);
+}
+
+function showSilentNotification(title, body){
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "granted") {
+        new Notification(title, { 
+            body: body,
+            silent: true
+        });
+    }
+    // 沒授權就不再請求權限（避免一直跳詢問框）
+}
+
+// 背景閃 TITLE → 切回自動停止 + 重新計時
+document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState === "visible" && isFlashing){
+        stopFlash();
+        const now = new Date();
+        const nextTarget = new Date(now.getTime() + intervalMinutes*60000);
+        scheduleNext(nextTarget);
+    }
+});
+
+// 滿版 overlay 點擊 → 隱藏 + 重新計時
+overlay.addEventListener("click", ()=>{
+    overlay.style.display = "none";
+    const now = new Date();
+    const nextTarget = new Date(now.getTime() + intervalMinutes*60000);
+    scheduleNext(nextTarget);
+});
+
+function stopFlash(){
+    clearInterval(flashInterval);
+    document.title = originalTitle;
+    isFlashing = false;
+}
+
+function clearAll(){
+    clearInterval(checkTimer);
+    stopFlash();
+    overlay.style.display = "none";
+}
+
+// ---------- 記事本功能 ----------
+const note1 = document.getElementById("note1");
+const note2 = document.getElementById("note2");
+
+// 載入之前存的內容
+note1.value = localStorage.getItem("note1") || "";
+note2.value = localStorage.getItem("note2") || "";
+
+// 即時存檔
+note1.addEventListener("input", () => {
+    localStorage.setItem("note1", note1.value);
+});
+note2.addEventListener("input", () => {
+    localStorage.setItem("note2", note2.value);
+});
+</script>
+
+</body>
+</html>
