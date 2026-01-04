@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">提醒器<title>titlee
+<meta charset="UTF-8">
+<title>提醒器</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -63,8 +64,8 @@
 <div id="overlay">該填人數了</div>
 
 <div class="notes">
-  <textarea id="note1" placeholder="記事本1"></textarea>
-  <textarea id="note2" placeholder="記事本2"></textarea>
+  <textarea id="note1" placeholder="記錄影片時間"></textarea>
+  <textarea id="note2" placeholder="抽獎名單"></textarea>
 </div>
 
 <script>
@@ -140,7 +141,7 @@ function onTimeUp(){
     }
 
     // 顯示靜音系統通知（只在已授權時）
-    showSilentNotification("⏰ 時間到了！", "請填在線人數。");
+    showSilentNotification("⭐ 時間到了！", "請填在線人數。");
 }
 
 function startTitleFlash(){
@@ -148,7 +149,7 @@ function startTitleFlash(){
     isFlashing = true;
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "⏰ 時間到了！" : originalTitle;
+        document.title = toggle ? "⭐ 時間到了！" : originalTitle;
         toggle = !toggle;
     },500);
 }
