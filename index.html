@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>優雅提醒器 - 專業版</title>
+<title>提醒器</title>
 <style>
   :root {
     --rose-bg: #f8f1f1;
@@ -23,7 +23,6 @@
     margin: 0;
   }
 
-  /* 控制列 */
   .inline-controls {
     display: flex;
     gap: 8px;
@@ -58,7 +57,6 @@
 
   button.main-btn:hover { background-color: var(--rose-dark); }
 
-  /* 提醒時間顯示 */
   .result-container {
     height: 40px; 
     display: flex;
@@ -69,7 +67,6 @@
 
   #result { font-weight: bold; color: var(--rose-dark); margin: 0; }
 
-  /* 筆記區域佈局 */
   .notes {
     display: flex;
     gap: 15px;
@@ -119,7 +116,6 @@
     outline: none;
   }
 
-  /* 提醒遮罩 */
   #overlay {
     display: none;
     position: fixed;
@@ -195,22 +191,19 @@ const modeSelect = document.getElementById("mode");
 const note1 = document.getElementById("note1");
 const note2 = document.getElementById("note2");
 
-// --- 載入記憶資料 ---
 window.onload = function() {
     note1.value = localStorage.getItem("note1") || "";
     note2.value = localStorage.getItem("note2") || "";
     minutesInput.value = localStorage.getItem("savedMinutes") || "";
     modeSelect.value = localStorage.getItem("savedMode") || "fixed";
-    startTimeInput.value = ""; // 開播時間不記憶
+    startTimeInput.value = "";
 };
 
-// --- 即時存檔監聽 ---
 note1.addEventListener("input", () => localStorage.setItem("note1", note1.value));
 note2.addEventListener("input", () => localStorage.setItem("note2", note2.value));
 minutesInput.addEventListener("input", () => localStorage.setItem("savedMinutes", minutesInput.value));
 modeSelect.addEventListener("change", () => localStorage.setItem("savedMode", modeSelect.value));
 
-// --- 功能函數 ---
 function copyText(id) {
     const el = document.getElementById(id);
     el.select();
@@ -297,7 +290,7 @@ function handleReset() {
 function startTitleFlash(){
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "【！！！】" : "填人數中";
+        document.title = toggle ? "醒醒啊" : "該填人數啦";
         toggle = !toggle;
     }, 600);
 }
@@ -320,6 +313,11 @@ function clearAll(){
     overlay.style.display = "none";
     document.getElementById("result").innerText = "";
 }
+
+// 關鍵修正：徹底禁用瀏覽器離開警告
+window.addEventListener('beforeunload', (event) => {
+    delete event['returnValue'];
+});
 </script>
 
 </body>
