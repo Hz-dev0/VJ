@@ -4,79 +4,120 @@
 <meta charset="UTF-8">
 <title>提醒器</title>
 <style>
+  :root {
+    --rose-bg: #f8f1f1;
+    --rose-primary: #c98d83; /* 乾燥玫瑰主色 */
+    --rose-secondary: #e2b2a8;
+    --rose-dark: #a66d64;
+    --text-color: #5d4a47;
+  }
+
   body {
-    font-family: "Microsoft JhengHei", Arial, sans-serif;
-    padding: 20px;
-    background-color: #f4f4f9;
+    font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+    padding: 40px 20px;
+    background-color: var(--rose-bg);
+    color: var(--text-color);
     display: flex;
     flex-direction: column;
-    align-items: center; /* 讓整體內容置中 */
+    align-items: center; 
+    margin: 0;
+  }
+
+  .main-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 600px;
   }
 
   .inline-controls {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
 
-  input[type="text"], input[type="number"] {
-    width: 100px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    text-align: center;
+  input[type="text"], input[type="number"], select {
+    padding: 10px;
+    border: 1px solid var(--rose-secondary);
+    border-radius: 8px;
+    outline: none;
+    color: var(--text-color);
+    transition: border 0.3s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--rose-primary);
   }
 
   button {
-    padding: 8px 20px;
-    background-color: #007bff;
+    padding: 10px 25px;
+    background-color: var(--rose-primary);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
+    transition: background 0.3s;
   }
 
-  button:hover { background-color: #0056b3; }
+  button:hover {
+    background-color: var(--rose-dark);
+  }
 
-  /* 滿版提醒畫面與閃動動畫 */
+  /* 提醒文字容器 */
+  .result-container {
+    height: 50px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  #result {
+    font-weight: bold;
+    color: var(--rose-dark);
+    margin: 0;
+    font-size: 1.1em;
+  }
+
+  /* 滿版提醒畫面 */
   #overlay {
     display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     color: white;
-    font-size: 8vw;
+    font-size: 6vw;
     font-weight: bold;
-    text-align: center;
     z-index: 9999;
     cursor: pointer;
-    /* 置中對齊 */
-    display: none; 
     justify-content: center;
     align-items: center;
+    text-align: center;
   }
 
-  /* 閃動動畫定義 */
   @keyframes flash-bg {
-    0% { background-color: black; }
-    50% { background-color: #ff0000; } /* 閃爍紅色 */
-    100% { background-color: black; }
+    0% { background-color: #5d4a47; }
+    50% { background-color: var(--rose-primary); }
+    100% { background-color: #5d4a47; }
   }
 
   .flashing {
-    animation: flash-bg 0.5s infinite;
+    animation: flash-bg 0.8s infinite;
   }
 
   .notes {
     display: flex;
     gap: 20px;
-    margin-top: 30px;
+    margin-top: 20px;
     width: 100%;
     max-width: 1000px;
     justify-content: center;
@@ -84,31 +125,51 @@
 
   textarea {
     width: 45%;
-    height: 300px;
-    padding: 15px;
-    font-size: 1.1em;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-    resize: none;
+    height: 350px;
+    padding: 20px;
+    font-size: 1em;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: white;
+    color: var(--text-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--rose-secondary);
   }
 </style>
 </head>
 <body>
 
-<div class="inline-controls">
-  <input type="text" id="startTime" placeholder="開播(如0840)">
-  <input type="number" id="minutes" placeholder="間隔(分)">
-  <button onclick="startTimer()">開始計時</button>
+<div class="main-card">
+  <div class="inline-controls">
+    <input type="text" id="startTime" placeholder="開播(如0840)" title="輸入四位數字">
+    <input type="number" id="minutes" placeholder="間隔(分)">
+    <select id="mode">
+      <option value="fixed">固定提醒</option>
+      <option value="relative">相對提醒</option>
+    </select>
+    <button onclick="startTimer()">開始計時</button>
+  </div>
+
+  <div class="result-container">
+    <p id="result"></p>
+  </div>
 </div>
 
-<p id="result" style="font-weight: bold; color: #555;"></p>
-
-<div id="overlay" onclick="handleReset()">該填人數了</div>
+<div id="overlay" onclick="handleReset()">
+  <div>
+    🌸 時間到了<br>
+    <span style="font-size: 0.4em; font-weight: normal;">點擊畫面繼續計時</span>
+  </div>
+</div>
 
 <div class="notes">
-  <textarea id="note1" placeholder="記錄影片時間..."></textarea>
-  <textarea id="note2" placeholder="抽獎名單..."></textarea>
+  <textarea id="note1" placeholder="🎬 記錄影片時間..."></textarea>
+  <textarea id="note2" placeholder="🎁 抽獎名單預備..."></textarea>
 </div>
 
 <script>
@@ -116,8 +177,8 @@ let originalTitle = document.title;
 let intervalMinutes = 0;
 let checkTimer = null;
 let flashInterval = null;
-let notificationRepeatInterval = null; // 重複通知的定時器
-let isTimeUp = false;
+let notificationRepeatInterval = null;
+let currentTargetTime = null; // 儲存目前的目標時間
 const overlay = document.getElementById("overlay");
 
 function startTimer() {
@@ -130,25 +191,21 @@ function startTimer() {
     intervalMinutes = parseInt(document.getElementById("minutes").value, 10);
 
     if (!/^\d{4}$/.test(timeStr) || isNaN(intervalMinutes)) {
-        alert("格式錯誤！時間請填 0840，間隔請填數字。");
+        alert("請確認輸入格式是否正確（時間如0840，間隔如10）");
         return;
     }
 
     let hour = parseInt(timeStr.substring(0,2),10);
     let min = parseInt(timeStr.substring(2,4),10);
     
-    // 假設開播是下午，自動 +12 (依你原本邏輯)
+    // PM 邏輯 (依您先前設定 +12)
     hour = (hour + 12) % 24;
 
-    scheduleNextFromNow(hour, min);
-}
-
-function scheduleNextFromNow(hour, min) {
     const now = new Date();
     let target = new Date(now);
     target.setHours(hour, min, 0, 0);
     
-    // 如果計算出的起始時間已經過去了，就從「現在」開始加間隔
+    // 初始計算：找到下一個提醒點
     while(target <= now){
         target.setMinutes(target.getMinutes() + intervalMinutes);
     }
@@ -157,53 +214,59 @@ function scheduleNextFromNow(hour, min) {
 }
 
 function scheduleNext(target){
-    document.getElementById("result").innerText = "⏰ 下次提醒：" + target.toLocaleTimeString();
+    currentTargetTime = target;
+    document.getElementById("result").innerText = "下一次提醒：" + target.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
     checkTimer = setInterval(()=>{
         const now = new Date();
         if(now >= target){
             clearInterval(checkTimer);
             onTimeUp();
         }
-    },1000);
+    }, 1000);
 }
 
 function onTimeUp(){
-    isTimeUp = true;
-    
-    // 1. 畫面閃動與顯示
     overlay.style.display = "flex";
     overlay.classList.add("flashing");
-
-    // 2. 標題閃爍
     startTitleFlash();
 
-    // 3. 立即顯示通知，並開啟每 10 秒重複一次的通知
-    showSilentNotification("⭐ 時間到了！", "請填在線人數。");
+    showSilentNotification("🌸 提醒時間到", "請回頁面確認人數");
     notificationRepeatInterval = setInterval(() => {
-        showSilentNotification("⭐ 提醒！", "尚未確認人數，請點擊畫面。");
-    }, 10000); // 10秒重複一次
+        showSilentNotification("🌸 提醒", "尚未確認，計時暫停中");
+    }, 10000);
 }
 
 function handleReset() {
-    // 停止所有提醒狀態
-    isTimeUp = false;
     overlay.style.display = "none";
     overlay.classList.remove("flashing");
     stopFlash();
     clearInterval(notificationRepeatInterval);
 
-    // 重新計算下一段時間
+    const mode = document.getElementById("mode").value;
     const now = new Date();
-    const nextTarget = new Date(now.getTime() + intervalMinutes * 60000);
+    let nextTarget;
+
+    if (mode === "fixed") {
+        // 固定模式：從原本的目標時間點繼續累加間隔，直到超過現在時間
+        nextTarget = new Date(currentTargetTime);
+        while (nextTarget <= now) {
+            nextTarget.setMinutes(nextTarget.getMinutes() + intervalMinutes);
+        }
+    } else {
+        // 相對模式：從「現在」往後推算間隔
+        nextTarget = new Date(now.getTime() + intervalMinutes * 60000);
+    }
+
     scheduleNext(nextTarget);
 }
 
 function startTitleFlash(){
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "【！！！】" : "填人數！";
+        document.title = toggle ? "【！！！】" : "填人數中";
         toggle = !toggle;
-    },500);
+    }, 600);
 }
 
 function stopFlash(){
@@ -217,16 +280,15 @@ function showSilentNotification(title, body){
     }
 }
 
-// 點擊 Overlay 隱藏
 function clearAll(){
     clearInterval(checkTimer);
     clearInterval(notificationRepeatInterval);
     stopFlash();
     overlay.style.display = "none";
-    overlay.classList.remove("flashing");
+    document.getElementById("result").innerText = "";
 }
 
-// 處理記事本
+// 記事本存檔
 const note1 = document.getElementById("note1");
 const note2 = document.getElementById("note2");
 note1.value = localStorage.getItem("note1") || "";
