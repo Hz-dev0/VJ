@@ -14,7 +14,7 @@
 
   body {
     font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-    padding: 30px 20px;
+    padding: 25px 20px;
     background-color: var(--rose-bg);
     color: var(--text-color);
     display: flex;
@@ -23,6 +23,7 @@
     margin: 0;
   }
 
+  /* 控制列 */
   .inline-controls {
     display: flex;
     gap: 8px;
@@ -42,9 +43,10 @@
     outline: none;
     color: var(--text-color);
     background-color: white;
+    font-size: 0.95em;
   }
 
-  button {
+  button.main-btn {
     padding: 8px 16px;
     background-color: var(--rose-primary);
     color: white;
@@ -52,26 +54,25 @@
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s;
   }
 
-  button:hover { background-color: var(--rose-dark); }
+  button.main-btn:hover { background-color: var(--rose-dark); }
 
+  /* 提醒時間顯示 */
   .result-container {
     height: 40px; 
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
-    margin-bottom: 10px;
   }
 
   #result { font-weight: bold; color: var(--rose-dark); margin: 0; }
 
-  /* 筆記區優化 */
+  /* 筆記區域佈局 */
   .notes {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     width: 100%;
     max-width: 1100px;
     justify-content: center;
@@ -81,33 +82,44 @@
     display: flex;
     flex-direction: column;
     width: 48%;
-    gap: 8px;
   }
 
   .note-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding: 0 5px;
+    font-size: 0.9em;
+    font-weight: bold;
   }
 
-  .btn-small {
-    padding: 4px 10px;
-    font-size: 12px;
-    background-color: #eee;
-    color: #666;
+  .btn-copy {
+    padding: 2px 8px;
+    font-size: 11px;
+    background-color: white;
+    color: var(--rose-dark);
+    border: 1px solid var(--rose-secondary);
     border-radius: 4px;
+    cursor: pointer;
   }
 
   textarea {
     width: 100%;
-    height: 400px;
+    height: 450px;
     padding: 15px;
     font-size: 1em;
     border: 1px solid var(--rose-secondary);
     border-radius: 10px;
-    box-sizing: border-box; /* 修正寬度爆出去的問題 */
+    background: white;
+    color: var(--text-color);
+    box-sizing: border-box;
+    resize: vertical;
+    outline: none;
   }
 
+  /* 提醒遮罩 */
   #overlay {
     display: none;
     position: fixed;
@@ -140,32 +152,32 @@
     <option value="fixed">固定模式</option>
     <option value="relative">相對模式</option>
   </select>
-  <button onclick="startTimer()">開始計時</button>
+  <button class="main-btn" onclick="startTimer()">開始計時</button>
 </div>
 
 <div class="result-container">
   <p id="result"></p>
 </div>
 
-<div id="overlay" onclick="handleReset()">
-  <div>🌸 時間到了<br><span style="font-size: 0.4em; font-weight: normal;">點擊畫面繼續</span></div>
-</div>
-
 <div class="notes">
   <div class="note-column">
+    <textarea id="note1" placeholder="在此記錄時間..."></textarea>
     <div class="note-header">
       <span>🎬 影片時間紀錄</span>
-      <button class="btn-small" onclick="copyText('note1')">複製全部</button>
+      <button class="btn-copy" onclick="copyText('note1')">複製內容</button>
     </div>
-    <textarea id="note1"></textarea>
   </div>
   <div class="note-column">
+    <textarea id="note2" placeholder="在此記錄名單..."></textarea>
     <div class="note-header">
       <span>🎁 抽獎名單</span>
-      <button class="btn-small" onclick="copyText('note2')">複製全部</button>
+      <button class="btn-copy" onclick="copyText('note2')">複製內容</button>
     </div>
-    <textarea id="note2"></textarea>
   </div>
+</div>
+
+<div id="overlay" onclick="handleReset()">
+  <div>🌸 時間到了<br><span style="font-size: 0.4em; font-weight: normal;">點擊畫面繼續</span></div>
 </div>
 
 <script>
@@ -175,19 +187,44 @@ let checkTimer = null;
 let flashInterval = null;
 let notificationRepeatInterval = null;
 let currentTargetTime = null;
-const overlay = document.getElementById("overlay");
 
-// 改善建議 1: 防誤關頁面
-window.onbeforeunload = function() {
-    if (checkTimer) return "計時仍在進行中，確定要離開嗎？";
+const overlay = document.getElementById("overlay");
+const startTimeInput = document.getElementById("startTime");
+const minutesInput = document.getElementById("minutes");
+const modeSelect = document.getElementById("mode");
+const note1 = document.getElementById("note1");
+const note2 = document.getElementById("note2");
+
+// --- 載入記憶資料 ---
+window.onload = function() {
+    // 記事本記憶
+    note1.value = localStorage.getItem("note1") || "";
+    note2.value = localStorage.getItem("note2") || "";
+    
+    // 間隔與模式記憶
+    minutesInput.value = localStorage.getItem("savedMinutes") || "";
+    modeSelect.value = localStorage.getItem("savedMode") || "fixed";
+    
+    // 開播時間不記憶 (保持空白)
+    startTimeInput.value = "";
 };
 
-// 改善建議 3: 一鍵複製
+// --- 即時存檔監聽 ---
+note1.addEventListener("input", () => localStorage.setItem("note1", note1.value));
+note2.addEventListener("input", () => localStorage.setItem("note2", note2.value));
+minutesInput.addEventListener("input", () => localStorage.setItem("savedMinutes", minutesInput.value));
+modeSelect.addEventListener("change", () => localStorage.setItem("savedMode", modeSelect.value));
+
+// --- 功能函數 ---
 function copyText(id) {
     const el = document.getElementById(id);
     el.select();
     document.execCommand('copy');
-    alert('已複製到剪貼簿！');
+    // 小提醒
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "已複製！";
+    setTimeout(() => btn.innerText = originalText, 1500);
 }
 
 function startTimer() {
@@ -196,8 +233,8 @@ function startTimer() {
         Notification.requestPermission();
     }
 
-    const timeStr = document.getElementById("startTime").value;
-    intervalMinutes = parseInt(document.getElementById("minutes").value, 10);
+    const timeStr = startTimeInput.value;
+    intervalMinutes = parseInt(minutesInput.value, 10);
 
     if (!/^\d{4}$/.test(timeStr) || isNaN(intervalMinutes)) {
         alert("格式錯誤！時間如0840，間隔如10");
@@ -248,7 +285,7 @@ function handleReset() {
     stopFlash();
     clearInterval(notificationRepeatInterval);
 
-    const mode = document.getElementById("mode").value;
+    const mode = modeSelect.value;
     const now = new Date();
     let nextTarget;
 
@@ -266,7 +303,7 @@ function handleReset() {
 function startTitleFlash(){
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "時間到" : "請填人數";
+        document.title = toggle ? "該填人數了唷" : "醒醒啊";
         toggle = !toggle;
     }, 600);
 }
@@ -290,12 +327,10 @@ function clearAll(){
     document.getElementById("result").innerText = "";
 }
 
-const note1 = document.getElementById("note1");
-const note2 = document.getElementById("note2");
-note1.value = localStorage.getItem("note1") || "";
-note2.value = localStorage.getItem("note2") || "";
-note1.addEventListener("input", () => localStorage.setItem("note1", note1.value));
-note2.addEventListener("input", () => localStorage.setItem("note2", note2.value));
+// 防誤關警告
+window.onbeforeunload = function() {
+    if (checkTimer) return "計時仍在進行中，確定要離開嗎？";
+};
 </script>
 
 </body>
