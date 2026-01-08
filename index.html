@@ -23,7 +23,6 @@
     margin: 0;
   }
 
-  /* 頂部控制列：移除大框框，改為簡約橫排 */
   .inline-controls {
     display: flex;
     gap: 8px;
@@ -33,7 +32,6 @@
     margin-bottom: 5px;
   }
 
-  /* 縮小輸入框寬度 */
   input[type="text"] { width: 85px; }
   input[type="number"] { width: 65px; }
   
@@ -44,7 +42,6 @@
     outline: none;
     color: var(--text-color);
     background-color: white;
-    font-size: 0.95em;
   }
 
   button {
@@ -56,12 +53,10 @@
     cursor: pointer;
     font-weight: bold;
     transition: background 0.3s;
-    white-space: nowrap;
   }
 
   button:hover { background-color: var(--rose-dark); }
 
-  /* 提醒文字容器：固定高度防止版面跳動 */
   .result-container {
     height: 40px; 
     display: flex;
@@ -71,14 +66,48 @@
     margin-bottom: 10px;
   }
 
-  #result {
-    font-weight: bold;
-    color: var(--rose-dark);
-    margin: 0;
-    font-size: 1em;
+  #result { font-weight: bold; color: var(--rose-dark); margin: 0; }
+
+  /* 筆記區優化 */
+  .notes {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1100px;
+    justify-content: center;
   }
 
-  /* 滿版提醒畫面 */
+  .note-column {
+    display: flex;
+    flex-direction: column;
+    width: 48%;
+    gap: 8px;
+  }
+
+  .note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-small {
+    padding: 4px 10px;
+    font-size: 12px;
+    background-color: #eee;
+    color: #666;
+    border-radius: 4px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 400px;
+    padding: 15px;
+    font-size: 1em;
+    border: 1px solid var(--rose-secondary);
+    border-radius: 10px;
+    box-sizing: border-box; /* 修正寬度爆出去的問題 */
+  }
+
   #overlay {
     display: none;
     position: fixed;
@@ -99,33 +128,7 @@
     50% { background-color: var(--rose-primary); }
     100% { background-color: #5d4a47; }
   }
-
   .flashing { animation: flash-bg 0.8s infinite; }
-
-  /* 筆記區域 */
-  .notes {
-    display: flex;
-    gap: 15px;
-    width: 100%;
-    max-width: 1100px;
-    justify-content: center;
-  }
-
-  textarea {
-    width: 48%;
-    height: 400px;
-    padding: 15px;
-    font-size: 1em;
-    border: 1px solid var(--rose-secondary);
-    border-radius: 10px;
-    background: white;
-    color: var(--text-color);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    resize: vertical;
-    outline: none;
-  }
-
-  textarea:focus { border-color: var(--rose-primary); }
 </style>
 </head>
 <body>
@@ -145,15 +148,24 @@
 </div>
 
 <div id="overlay" onclick="handleReset()">
-  <div>
-    🌸 時間到了<br>
-    <span style="font-size: 0.4em; font-weight: normal;">點擊畫面繼續</span>
-  </div>
+  <div>🌸 時間到了<br><span style="font-size: 0.4em; font-weight: normal;">點擊畫面繼續</span></div>
 </div>
 
 <div class="notes">
-  <textarea id="note1" placeholder="🎬 記錄影片時間..."></textarea>
-  <textarea id="note2" placeholder="🎁 抽獎名單..."></textarea>
+  <div class="note-column">
+    <div class="note-header">
+      <span>🎬 影片時間紀錄</span>
+      <button class="btn-small" onclick="copyText('note1')">複製全部</button>
+    </div>
+    <textarea id="note1"></textarea>
+  </div>
+  <div class="note-column">
+    <div class="note-header">
+      <span>🎁 抽獎名單</span>
+      <button class="btn-small" onclick="copyText('note2')">複製全部</button>
+    </div>
+    <textarea id="note2"></textarea>
+  </div>
 </div>
 
 <script>
@@ -164,6 +176,19 @@ let flashInterval = null;
 let notificationRepeatInterval = null;
 let currentTargetTime = null;
 const overlay = document.getElementById("overlay");
+
+// 改善建議 1: 防誤關頁面
+window.onbeforeunload = function() {
+    if (checkTimer) return "計時仍在進行中，確定要離開嗎？";
+};
+
+// 改善建議 3: 一鍵複製
+function copyText(id) {
+    const el = document.getElementById(id);
+    el.select();
+    document.execCommand('copy');
+    alert('已複製到剪貼簿！');
+}
 
 function startTimer() {
     clearAll();
@@ -211,7 +236,6 @@ function onTimeUp(){
     overlay.style.display = "flex";
     overlay.classList.add("flashing");
     startTitleFlash();
-
     showSilentNotification("🌸 時間到了！", "請填寫人數。");
     notificationRepeatInterval = setInterval(() => {
         showSilentNotification("🌸 提醒", "尚未確認，計時暫停中");
@@ -236,14 +260,13 @@ function handleReset() {
     } else {
         nextTarget = new Date(now.getTime() + intervalMinutes * 60000);
     }
-
     scheduleNext(nextTarget);
 }
 
 function startTitleFlash(){
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "【！！！】" : "填人數中";
+        document.title = toggle ? "時間到" : "請填人數";
         toggle = !toggle;
     }, 600);
 }
