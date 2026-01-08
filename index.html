@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>提醒器</title>
+<title>優雅提醒器 - 專業版</title>
 <style>
   :root {
     --rose-bg: #f8f1f1;
@@ -197,16 +197,11 @@ const note2 = document.getElementById("note2");
 
 // --- 載入記憶資料 ---
 window.onload = function() {
-    // 記事本記憶
     note1.value = localStorage.getItem("note1") || "";
     note2.value = localStorage.getItem("note2") || "";
-    
-    // 間隔與模式記憶
     minutesInput.value = localStorage.getItem("savedMinutes") || "";
     modeSelect.value = localStorage.getItem("savedMode") || "fixed";
-    
-    // 開播時間不記憶 (保持空白)
-    startTimeInput.value = "";
+    startTimeInput.value = ""; // 開播時間不記憶
 };
 
 // --- 即時存檔監聽 ---
@@ -220,7 +215,6 @@ function copyText(id) {
     const el = document.getElementById(id);
     el.select();
     document.execCommand('copy');
-    // 小提醒
     const btn = event.target;
     const originalText = btn.innerText;
     btn.innerText = "已複製！";
@@ -303,7 +297,7 @@ function handleReset() {
 function startTitleFlash(){
     let toggle = false;
     flashInterval = setInterval(()=>{
-        document.title = toggle ? "該填人數了唷" : "醒醒啊";
+        document.title = toggle ? "【！！！】" : "填人數中";
         toggle = !toggle;
     }, 600);
 }
@@ -326,11 +320,6 @@ function clearAll(){
     overlay.style.display = "none";
     document.getElementById("result").innerText = "";
 }
-
-// 防誤關警告
-window.onbeforeunload = function() {
-    if (checkTimer) return "計時仍在進行中，確定要離開嗎？";
-};
 </script>
 
 </body>
